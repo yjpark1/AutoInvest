@@ -17,6 +17,15 @@ class DataBase:
         self.factor_kosdaq = pd.read_excel(path_factors, sheet_name='kosdaq_factor')
         self.price = pd.read_excel(path_price, sheet_name='Sheet3')
 
+    def get_database_full(self):
+        factor = self.factor_kospi.append(self.factor_kosdaq)
+        return {'price': self.price, 'factor': factor}
+
+    def unload_database(self):
+        self.fator_kospi = None
+        self.fator_kosdaq = None
+        self.price = None
+
     def load_factor_by_year(self, year):
         if self.type == 'both':
             if self.factor_kospi is None:
@@ -41,7 +50,7 @@ class DataBase:
             factors = self.factor_kosdaq[['Symbol', 'Symbol Name', 'Item', 'Item Name', year]]
 
         else:
-            raise NotImplementedError
+            raise NotImplementedError()
         return factors
 
     def load_price_by_year(self, year):

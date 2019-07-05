@@ -1,14 +1,19 @@
+'''
+<Definition of scores>
+https://drive.google.com/file/d/1bzvdNNCqHSb6L-LZsB1zzl9qulXENUJX/view?usp=sharing
+'''
+
 import numpy as np
 import pandas as pd
 
+
 class StockScore:
-    def __init__(self):
-        self.type = type
+    def __init__(self, factor, price):
+        self.factor = factor
+        self.price = price
 
     def get_factors_by_year(self, year):
         self.year = year
-
-        
         return
 
     def _calc_factor_psr(self):
