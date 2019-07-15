@@ -23,9 +23,7 @@ class FindItem:
 
 class EqualWeight(FindItem):
     def __init__(self, factor, price, year):
-        self.year = year
-        self.factor = factor
-        self.price = price
+        super(EqualWeight).__init__(factor, price, year)
 
     def factor_scale(self):
         return
