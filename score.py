@@ -201,9 +201,10 @@ class StockScore:
 
         g_geometric = 1.
         for i in range(5):
-            stock_factor_year = stock_factor[['Symbol', 'Symbol Name', 'Kind', 'Item', 'Item Name', 'Frequency', year - i]]
-            g = stock_factor_year[stock_factor_year.Item == 6000208027][year - i].values.item()
             try:
+                stock_factor_year = stock_factor[
+                    ['Symbol', 'Symbol Name', 'Kind', 'Item', 'Item Name', 'Frequency', year - i]]
+                g = stock_factor_year[stock_factor_year.Item == 6000208027][year - i].values.item()
                 g_geometric *= (1 + (g * 0.01))
             except TypeError:
                 break
