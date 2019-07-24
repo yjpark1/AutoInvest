@@ -39,14 +39,14 @@ class EqualWeight(FindItem):
 
 
 class FilterItem:
-    '''
+    """
     inputs
         factor: factors for a year
         beneish, altman: flags
 
     outputs
         filtered factors by beneish & altman scores
-    '''
+    """
     def __init__(self, factor, beneish=True, altman=True):
         self.factor = factor
         self.beneish=beneish

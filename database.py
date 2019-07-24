@@ -10,6 +10,7 @@ class DataBase:
         self.type = type
         self.factor_kospi = None
         self.factor_kosdaq = None
+        self.factor = None
         self.price = None
 
     def load_database_full(self):
@@ -18,13 +19,14 @@ class DataBase:
         self.price = pd.read_excel(path_price, sheet_name='Sheet3')
 
     def get_database_full(self):
-        factor = self.factor_kospi.append(self.factor_kosdaq)
-        return {'price': self.price, 'factor': factor}
+        self.factor = self.factor_kospi.append(self.factor_kosdaq)
+        return {'price': self.price, 'factor': self.factor}
 
     def unload_database(self):
         self.fator_kospi = None
         self.fator_kosdaq = None
         self.price = None
+        self.factor = None
 
     def load_factor_by_year(self, year):
         if self.type == 'both':
