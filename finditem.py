@@ -45,6 +45,7 @@ class EqualWeight(FindItem):
         scale = preprocessing.StandardScaler()
         scale.fit_transform(x)
         np.isnan(x.values).sum()
+        scores.describe()
         
 
         return
