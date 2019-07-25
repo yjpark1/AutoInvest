@@ -1,16 +1,11 @@
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 
 class FindItem:
-    def __init__(self, factor, price, year):
-        self.year = year
-        self.factor = factor
-        self.price = price
-
-    def preprocess(self, scores):
-
-
+    def preprocess(self):
+        raise NotImplementedError()
 
     def factor_scale(self):
         raise NotImplementedError()
@@ -26,8 +21,8 @@ class FindItem:
 
 
 class EqualWeight(FindItem):
-    def __init__(self, factor, price, year):
-        super(EqualWeight).__init__(factor, price, year)
+    def __init__(self):
+        super(EqualWeight, self).__init__()
         self.direction = {"PSR": 1,
                           "PBR": 1,
                           "PER": 1,
@@ -40,12 +35,24 @@ class EqualWeight(FindItem):
                           "DIV": 1,
                           "FSCORE": 1}
 
+    def preprocess(self, scores):
+        for col, d in self.direction.items():
+            scores = scores.replace({col: np.nan}, {col: scores[col].min()})
+        return scores
 
-    def factor_scale(self):
+    def factor_scale(self, scores):
+        x = scores[scores.columns[2:]]
+        scale = preprocessing.StandardScaler()
+        scale.fit_transform(x)
+        np.isnan(x.values).sum()
+        
+
         return
 
-    def align_derection(self):
-        return
+    def align_derection(self, scores):
+        for col, d in self.direction.items():
+            scores[col] = d * scores[col]
+        return scores
 
     def factor_aggregation(self):
         return
@@ -123,3 +130,18 @@ class FilterItem:
 
     def _altman_x5(self):
         return
+
+
+if __name__ == "__main__":
+    """
+    import pickle
+    with open("scores.pkl", "wb") as f:
+        pickle.dump(scores, f)
+    scores = pickle.load(open("scores.pkl", "rb"))
+    """
+    import pickle
+    scores = pickle.load(open("scores.pkl", "rb"))
+
+    finditem = EqualWeight()
+    scores = finditem.align_derection(scores)
+    scores = finditem.preprocess(scores)
