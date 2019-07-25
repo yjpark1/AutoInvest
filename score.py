@@ -6,32 +6,45 @@ https://drive.google.com/file/d/1bzvdNNCqHSb6L-LZsB1zzl9qulXENUJX/view?usp=shari
 import numpy as np
 import pandas as pd
 
+'''
+factor = data['factor']
+price = data['price']
+'''
+
 
 class StockScore:
     def __init__(self, factor, price):
         self.factor = factor
         self.price = price
+        self.stock_symbols = self.factor[['Symbol', 'Symbol Name']].drop_duplicates()
 
     def make_score_table(self, year):
-        stock_symbols = self.factor[['Symbol', 'Symbol Name']].drop_duplicates()
-
         scores = []
-        for symbol in stock_symbols.Symbol:
+        for i, symbol in enumerate(self.stock_symbols.Symbol):
             score = self.score_for_stock(symbol, year)
             scores.append(score)
         scores = np.array(scores)
         scores = pd.DataFrame(scores)
-        scores_symbol = pd.concat([stock_symbols.reset_index(drop=True), scores], axis=1)
-        scores_symbol.head()
-        scores.rename(columns={0: "PSR", 1: "PBR", 2: "PER", 3: "PCR", 4: "NCAV", 5: "GPA",
-                               6: "EVEBIT", 7: "PEG", 8: "JOHNPRICE", 9: "DIV", 10: "FSCORE"})
+        scores_symbol = pd.concat([self.stock_symbols.reset_index(drop=True), scores], axis=1)
+        scores_symbol = scores_symbol.rename(columns={0: "PSR", 1: "PBR", 2: "PER", 3: "PCR", 4: "NCAV", 5: "GPA",
+                                                      6: "EVEBIT", 7: "PEG", 8: "JOHNPRICE", 9: "DIV", 10: "FSCORE"})
 
-        return scores
+        return scores_symbol
 
     def score_for_stock(self, stock_symbol, year):
-        stock_symbol_name = self.factor[self.factor.Symbol == stock_symbol]['Symbol Name'][0]
+        stock_symbol_name = self.stock_symbols[self.stock_symbols.Symbol == stock_symbol]['Symbol Name'].values[0]
         stock_factor = self.factor[self.factor.Symbol == stock_symbol]
-        stock_price = self.price[['Date', stock_symbol+'_'+stock_symbol_name]]
+
+        try:
+            stock_price = self.price[['Date', stock_symbol+'_'+stock_symbol_name]]
+        except KeyError:
+            candidates = [x for x in self.price.columns.values if stock_symbol in x]
+            if len(candidates) > 1:
+                raise RuntimeError()
+            elif len(candidates) == 0:
+                return [np.nan for _ in range(11)]
+            else:
+                stock_price = self.price[['Date', candidates[0]]]
 
         scores = []
         scores.append(self._calc_factor_psr(stock_factor, stock_price, year))
@@ -40,6 +53,7 @@ class StockScore:
         scores.append(self._calc_factor_pcr(stock_factor, stock_price, year))
         scores.append(self._calc_factor_ncav(stock_factor, stock_price, year))
         scores.append(self._calc_factor_gpa(stock_factor, stock_price, year))
+        scores.append(self._calc_factor_evebit(stock_factor, stock_price, year))
         scores.append(self._calc_factor_peg(stock_factor, stock_price, year))
         scores.append(self._calc_factor_johnprice(stock_factor, stock_price, year))
         scores.append(self._calc_factor_div(stock_factor, stock_price, year))
@@ -206,7 +220,7 @@ class StockScore:
                     ['Symbol', 'Symbol Name', 'Kind', 'Item', 'Item Name', 'Frequency', year - i]]
                 g = stock_factor_year[stock_factor_year.Item == 6000208027][year - i].values.item()
                 g_geometric *= (1 + (g * 0.01))
-            except TypeError:
+            except (TypeError, KeyError):
                 break
         g_geometric = g_geometric ** (1/(i+1))
 
@@ -224,7 +238,10 @@ class StockScore:
         pbr = self._calc_factor_pbr(stock_factor, stock_price, year)
         roe = stock_factor_year[stock_factor_year.Item == 6000312001][year].values.item()
 
-        value = roe / pbr
+        try:
+            value = roe / pbr
+        except TypeError:
+            value = np.nan
 
         return value
             
@@ -304,9 +321,12 @@ class StockScore:
             roa = stock_factor_year[stock_factor_year.Item == 6000306001][year-i].values.item()
             ROAs.append(roa)
 
-        if ROAs[0] > ROAs[1]:
-            value = 1.
-        else:
+        try:
+            if ROAs[0] > ROAs[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -321,9 +341,12 @@ class StockScore:
         stock_factor_year = stock_factor[['Symbol', 'Symbol Name', 'Kind', 'Item', 'Item Name', 'Frequency', year]]
         netprofit = stock_factor_year[stock_factor_year.Item == 6000908001][year].values.item()
 
-        if cashflow > netprofit:
-            value = 1.
-        else:
+        try:
+            if cashflow > netprofit:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -339,9 +362,12 @@ class StockScore:
             debt_ratio = stock_factor_year[stock_factor_year.Item == 6000102001][year - i].values.item()
             debt_ratios.append(debt_ratio)
 
-        if debt_ratios[0] > debt_ratios[1]:
-            value = 1.
-        else:
+        try:
+            if debt_ratios[0] > debt_ratios[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -359,9 +385,12 @@ class StockScore:
             liquid_ratio = liquid_asset / liquid_debt
             liquid_ratios.append(liquid_ratio)
 
-        if liquid_ratios[0] > liquid_ratios[1]:
-            value = 1.
-        else:
+        try:
+            if liquid_ratios[0] > liquid_ratios[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -376,9 +405,12 @@ class StockScore:
             num_stock = stock_factor_year[stock_factor_year.Item == 'S430002205'][year - i].values.item()
             num_stocks.append(num_stock)
 
-        if num_stocks[0] == num_stocks[1]:
-            value = 1.
-        else:
+        try:
+            if num_stocks[0] == num_stocks[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -395,9 +427,12 @@ class StockScore:
             ratio = gross_profit / sales
             Ratios.append(ratio)
 
-        if Ratios[0] > Ratios[1]:
-            value = 1.
-        else:
+        try:
+            if Ratios[0] > Ratios[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
@@ -412,22 +447,31 @@ class StockScore:
             asset_trunover = stock_factor_year[stock_factor_year.Item == 6000401001][year - i].values.item()
             asset_trunovers.append(asset_trunover)
 
-        if asset_trunovers[0] > asset_trunovers[1]:
-            value = 1.
-        else:
+        try:
+            if asset_trunovers[0] > asset_trunovers[1]:
+                value = 1.
+            else:
+                value = 0.
+        except TypeError:
             value = 0.
 
         return value
 
 
 if __name__ == '__main__':
-    from database import DataBase
-    db = DataBase(type='both')
-    db.load_database_full()
-    # db.factor = db.factor_kospi.append(db.factor_kosdaq)
-    data = db.get_database_full()
-    db.unload_database()  # check out DataBase class
+    # from database import DataBase
+    # db = DataBase(type='both')
+    # db.load_database_full()
+    # # db.factor = db.factor_kospi.append(db.factor_kosdaq)
+    # data = db.get_database_full()
+    # db.unload_database()  # check out DataBase class
+
+    import pickle
+    # with open('data.pkl', 'wb') as f:
+    #     pickle.dump(data, f)
+
+    data = pickle.load(open('data.pkl', 'rb'))
 
     score = StockScore(factor=data['factor'], price=data['price'])
-    score.make_score_table(year=2001)
+    data_score = score.make_score_table(year=2001)
 

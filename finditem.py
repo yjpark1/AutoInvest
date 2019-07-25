@@ -8,6 +8,10 @@ class FindItem:
         self.factor = factor
         self.price = price
 
+    def preprocess(self, scores):
+
+
+
     def factor_scale(self):
         raise NotImplementedError()
 
@@ -24,6 +28,18 @@ class FindItem:
 class EqualWeight(FindItem):
     def __init__(self, factor, price, year):
         super(EqualWeight).__init__(factor, price, year)
+        self.direction = {"PSR": 1,
+                          "PBR": 1,
+                          "PER": 1,
+                          "PCR": 1,
+                          "NCAV": 1,
+                          "GPA": 1,
+                          "EVEBIT": 1,
+                          "PEG": 1,
+                          "JOHNPRICE": 1,
+                          "DIV": 1,
+                          "FSCORE": 1}
+
 
     def factor_scale(self):
         return

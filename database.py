@@ -64,7 +64,7 @@ class DataBase:
 
 
 if __name__ == '__main__':
-    test = DataBase(type='both')
-    a = test.load_factor_by_year(year=2012)
-    b = test.load_price_by_year(year=2012)
-    test.load_database_full()
+    db = DataBase(type='both')
+    a = db.load_factor_by_year(year=2012)
+    b = db.load_price_by_year(year=2012)
+    db.load_database_full()
