@@ -23,43 +23,51 @@ class FindItem:
 class EqualWeight(FindItem):
     def __init__(self):
         super(EqualWeight, self).__init__()
-        self.direction = {"PSR": 1,
-                          "PBR": 1,
-                          "PER": 1,
-                          "PCR": 1,
+        self.direction = {"PSR": -1,
+                          "PBR": -1,
+                          "PER": -1,
+                          "PCR": -1,
                           "NCAV": 1,
                           "GPA": 1,
-                          "EVEBIT": 1,
-                          "PEG": 1,
+                          "EVEBIT": -1,
+                          "PEG": -1,
                           "JOHNPRICE": 1,
                           "DIV": 1,
                           "FSCORE": 1}
 
     def preprocess(self, scores):
         for col, d in self.direction.items():
-            scores = scores.replace({col: np.nan}, {col: scores[col].min()})
+            val_replace = scores[col].replace([-np.inf, np.inf], np.nan)
+
+            scores = scores.replace({col: np.nan}, {col: val_replace.mean()})
+            scores = scores.replace({col: -np.Infinity}, {col: val_replace.min()})
+            scores = scores.replace({col: np.Infinity}, {col: val_replace.max()})
+
         return scores
 
     def factor_scale(self, scores):
         x = scores[scores.columns[2:]]
         scale = preprocessing.StandardScaler()
-        scale.fit_transform(x)
-        np.isnan(x.values).sum()
-        scores.describe()
-        
+        scores_scaled = scale.fit_transform(x)
 
-        return
+        scores_scaled = pd.DataFrame(scores_scaled)
+        scores_scaled = scores_scaled.rename(columns={0: "PSR", 1: "PBR", 2: "PER", 3: "PCR", 4: "NCAV", 5: "GPA",
+                                                      6: "EVEBIT", 7: "PEG", 8: "JOHNPRICE", 9: "DIV", 10: "FSCORE"})
+        scores = pd.concat([scores[scores.columns[0:2]], scores_scaled], axis=1)
+
+        return scores
 
     def align_derection(self, scores):
         for col, d in self.direction.items():
             scores[col] = d * scores[col]
         return scores
 
-    def factor_aggregation(self):
-        return
+    def factor_aggregation(self, scores):
+        scores['sum'] = scores[scores.columns[2:]].sum(axis=1)
+        return scores
 
-    def find_candidates(self):
-        return
+    def find_candidates(self, scores, top=20):
+        return scores.nlargest(top, 'sum')
 
 
 class FilterItem:
@@ -94,6 +102,14 @@ class FilterItem:
         return filtered_factor
 
     def _beneish_DSRI(self):
+        stock_factor_year = stock_factor[['Symbol', 'Symbol Name', 'Kind', 'Item', 'Item Name', 'Frequency', year]]
+        stock_price_year = stock_price[stock_price.Date == '{}-12-31'.format(year)]
+
+        price = stock_price_year.iloc[0, 1]
+        numstocks = stock_factor_year[stock_factor_year.Item == 'S430002205'][year].values.item()
+        sales = stock_factor_year[stock_factor_year.Item == 6000901001][year].values.item() * 1000.
+
+        value = price * numstocks / sales
         return
 
     def _beneish_GMI(self):
@@ -146,3 +162,6 @@ if __name__ == "__main__":
     finditem = EqualWeight()
     scores = finditem.align_derection(scores)
     scores = finditem.preprocess(scores)
+    scores = finditem.factor_scale(scores)
+    scores = finditem.factor_aggregation(scores)
+    scores = finditem.find_candidates(scores, top=20)
