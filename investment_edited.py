@@ -25,9 +25,7 @@ Points = 100
 
 stock_dict = {}
 for year in range(2010,2019):
-
     for q in range(4):
-
         x = np.linspace(0, 40, Points)
         Flow_list =[]
         for i in range(Stock_num):
@@ -47,7 +45,6 @@ for year in range(2010,2019):
         period = str(year)+'_'+str(q)
         stock_dict[period]=tmp_stock
 
-price = stock0
 
 class Investment:
     # TODO: check architecture
