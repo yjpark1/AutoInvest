@@ -14,7 +14,8 @@ dtypes={'Code':str, 'Name':str,
         'Stocks':np.int64, 'MarketId':str, 'Market':str, 'Dept':str,
         'Rank':np.int64}
 
-dir_data = '../marcap/data/'
+# dir_data = '../marcap/data/'
+dir_data = 'marcap/data/'
 
 if __name__ == "__main__":
     for i, p in enumerate(sorted(os.listdir(dir_data))):
